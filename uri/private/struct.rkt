@@ -10,5 +10,6 @@
 
 (define-simple-macro (struct/singleton-subtype id:id parent:id)
   (begin
-    (struct id parent () #:omit-define-syntaxes #:constructor-name make-instance)
+    (struct id parent ()
+      #:omit-define-syntaxes #:constructor-name make-instance #:transparent)
     (define id (make-instance))))
