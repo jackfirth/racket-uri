@@ -8,6 +8,7 @@
   [path-segment? predicate/c]
   [plain-segment (-> string? plain-segment?)]
   [plain-segment? predicate/c]
+  [plain-segment-value (-> plain-segment? string?)]
   [plain-uri-path (->* () #:rest (listof string?) (uri-path/c plain-segment?))]
   [uri-path (->* () #:rest (listof path-segment?) uri-path?)]
   [uri-path? predicate/c]
@@ -37,5 +38,5 @@
 (define empty-uri-path (uri-path))
 (define (empty-uri-path? v) (equal? v empty-uri-path))
 
-(struct plain-segment path-segment (str) #:transparent)
+(struct plain-segment path-segment (value) #:transparent)
 (define (plain-uri-path . strs) (apply uri-path (map plain-segment strs)))
