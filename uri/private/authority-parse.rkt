@@ -9,6 +9,7 @@
                      #:reg-name (parser/c char? reg-name?))
                     (parser/c char? authority?))]
   [net-authority/p (parser/c char? net-authority?)]
+  [net-authority/empty/p (parser/c char? net-authority/empty?)]
   [password-str/p (parser/c char? string?)]
   [username-str/p (parser/c char? string?)]))
 
@@ -48,8 +49,10 @@
                  (user+password-info
                   "jack" #:password "secret-password::!!isthebest"))))
 
+(define dns-reg-name/p (map dns-reg-name dns-address/p))
+
 (define (authority/p #:userinfo [userinfo user+password-info/p]
-                     #:reg-name [reg-name (map dns-reg-name dns-address/p)])
+                     #:reg-name [reg-name dns-reg-name/p])
   (define userinfo-opt (or/p (try/p (seq0 userinfo (char/p #\@))) (pure #f)))
   (define port-opt (or/p (seq (char/p #\:) port-number/p) (pure #f)))
   (define (authority/parsed-args userinfo reg-name port)
@@ -70,3 +73,6 @@
   (check-equal? (parse-string net-authority/p "jack@google.com")
                 (success (authority google-reg-name
                                     #:userinfo (user+password-info "jack")))))
+
+(define net-authority/empty/p
+  (authority/p #:reg-name (or/p dns-reg-name/p (pure empty-reg-name))))
