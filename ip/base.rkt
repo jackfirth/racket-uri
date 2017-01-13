@@ -9,7 +9,8 @@
   [ipv4-address->bytes (-> ipv4-address? bytes?)]
   [ipv4-address->dotted-string (-> ipv4-address? string?)]
   [ipv4-address->list (-> ipv4-address? (list/c byte? byte? byte? byte?))]
-  [localhost ipv4-address?]))
+  [localhost ipv4-address?]
+  [localhost? predicate/c]))
 
 (require compose-app/fancy-app
          racket/function)
@@ -22,6 +23,7 @@
   #:transparent #:omit-define-syntaxes)
 
 (define localhost (ipv4-address 127 0 0 1))
+(define localhost? (equal? _ localhost))
 
 (define (ipv4-address->list addr)
   (list (ipv4-address-first addr)
