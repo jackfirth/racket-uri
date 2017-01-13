@@ -6,7 +6,9 @@
  (contract-out
   [pct-decode/p (parser/c char? char?)]
   [stringof (-> (parser/c char? char?) (parser/c char? string?))]
+  [symbol/p (-> symbol? (parser/c char? symbol?))]
   [uri-sub-delims/p (parser/c char? char?)]
+  [uri-sub-delims/no-key-value/p (parser/c char? char?)]
   [uri-unreserved/p (parser/c char? char?)]))
 
 (require compose-app/fancy-app
@@ -21,6 +23,7 @@
            rackunit))
 
 
+(define symbol/p (map string->symbol _ .. string/p .. symbol->string))
 (define stringof (map list->string _ .. many/p))
 
 (define (pct-decode first-hex second-hex)
@@ -47,3 +50,4 @@
 (define uri-digit/p (char-between/p #\0 #\9))
 (define uri-unreserved/p (or/p uri-alpha/p uri-digit/p (char-in/p "-._~")))
 (define uri-sub-delims/p (char-in/p  "!$&'()*+,;="))
+(define uri-sub-delims/no-key-value/p (char-in/p "!$'()*+,;"))
