@@ -5,7 +5,7 @@
                "compose-app"
                "functional-lib"
                "megaparsack-lib"
-               "base"))
+               ("base" #:version "6.5")))
 (define build-deps '("scribble-lib"
                      "scribble-text-lib"
                      "rackunit-lib"))
