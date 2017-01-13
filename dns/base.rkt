@@ -8,7 +8,10 @@
   [dns-address? predicate/c]
   [dns-address->list (-> dns-address? (listof dns-subdomain?))]
   [dns-address->string (-> dns-address? string?)]
-  [dns-root dns-address?]
+  [dns-localhost dns-address?]
+  [dns-localhost? predicate/c]
+  [dns-root dns-root?]
+  [dns-root? predicate/c]
   [dns-subdomain? predicate/c]))
 
 (require compose-app/fancy-app
@@ -83,6 +86,7 @@
 
 (define (dns-address . parts) (make-dns-address parts))
 (define dns-root (dns-address))
+(define dns-root? (equal? _ dns-root))
 
 (define dns-address->list dns-address-parts)
 (define (dns-address->string addr)
@@ -93,3 +97,6 @@
   (check-equal? (dns-address->string dns-root) ".")
   (check-equal? (dns-address->string (dns-address "www" "google" "com"))
                 "www.google.com"))
+
+(define dns-localhost (dns-address "localhost"))
+(define dns-localhost? (equal? _ dns-localhost))
