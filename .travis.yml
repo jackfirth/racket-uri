@@ -3,7 +3,6 @@ sudo: false
 env:
   global:
     - RACKET_DIR=~/racket
-    - COLLECTIONS=net/ip net/dns net/uri
   matrix:
     - RACKET_VERSION=6.6
     - RACKET_VERSION=6.7
@@ -19,5 +18,5 @@ install:
   - raco pkg install --auto $TRAVIS_BUILD_DIR
 
 script:
-  - raco test -c ${COLLECTIONS}
-  - raco cover -f codecov -d $TRAVIS_BUILD_DIR/coverage -c ${COLLECTIONS}
+  - raco test -c net/ip net/dns net/uri
+  - raco cover -f codecov -d $TRAVIS_BUILD_DIR/coverage -c net/ip net/dns net/uri
