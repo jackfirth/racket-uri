@@ -71,8 +71,6 @@
 (define too-long-message
   "dns address with total length less than 256 (including dots)")
 
-(define (first-value . vs) (first vs))
-
 (define dns-address-subdomains/p
   (guard/p (many/p dns-subdomain/p #:sep (char/p #\.) #:min 1)
            dns-address-parts-short-enough?
