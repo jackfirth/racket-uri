@@ -25,6 +25,9 @@
 (define localhost (ipv4-address 127 0 0 1))
 (define localhost? (equal? _ localhost))
 
+(module+ test
+  (check-pred localhost? localhost))
+
 (define (ipv4-address->list addr)
   (list (ipv4-address-first addr)
         (ipv4-address-second addr)
