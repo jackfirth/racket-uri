@@ -100,3 +100,6 @@
 
 (define dns-localhost (dns-address "localhost"))
 (define dns-localhost? (equal? _ dns-localhost))
+
+(module+ test
+  (check-pred dns-localhost? dns-localhost))

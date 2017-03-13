@@ -22,6 +22,9 @@
          "query.rkt"
          "uri-path.rkt")
 
+(module+ test
+  (require rackunit))
+
 
 (struct uri (scheme authority hier-path query fragment)
   #:transparent #:constructor-name make-uri #:omit-define-syntaxes)
@@ -32,3 +35,11 @@
              #:query [query #f]
              #:fragment [fragment #f])
   (make-uri scheme authority path query fragment))
+
+(module+ test
+  (check-equal? (uri 'foo)
+                (uri 'foo
+                     #:authority #f
+                     #:path empty-uri-path
+                     #:query #f
+                     #:fragment #f)))

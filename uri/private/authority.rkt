@@ -39,6 +39,10 @@
          racket/tcp
          "struct.rkt")
 
+(module+ test
+  (require rackunit))
+
+
 (struct/supertype-only userinfo)
 
 (struct user+password-info userinfo (user password)
@@ -61,19 +65,41 @@
   (make-authority host userinfo port))
 
 (define (authority/c #:host [host-pred host?]
-                     #:userinfo [userinfo-pred userinfo?]
+                     #:userinfo [userinfo-pred (or/c userinfo? #f)]
                      #:port [port-pred (const #t)])
   (and/c authority?
          (host-pred .. authority-host)
          (userinfo-pred .. authority-userinfo)
          (port-pred .. authority-port)))
 
+(module+ test
+  (check-pred (authority/c) (authority localhost)))
+
 (define net-authority?
   (authority/c #:host net-host? #:userinfo (or/c user+password-info? #f)))
+
+(module+ test
+  (check-pred net-authority? (authority (dns-reg-name dns-localhost)))
+  (check-pred net-authority?
+              (authority (dns-reg-name dns-localhost)
+                         #:userinfo (user+password-info "someuser")))
+  (check-pred (negate net-authority?)
+              (authority "some-non-netloc-host"))
+  (check-pred (negate net-authority?)
+              (authority (dns-reg-name dns-localhost)
+                         #:userinfo "some-non-user+password-info")))
 
 (define net-authority/empty?
   (authority/c #:host (or/c empty-reg-name?
                             localhost?
                             (dns-localhost? .. dns-reg-name-address))
-               #:userinfo #f
+               #:userinfo not
                #:port not))
+
+(module+ test
+  (check-pred net-authority/empty? (authority (dns-reg-name dns-localhost)))
+  (check-pred net-authority/empty? (authority empty-reg-name))
+  (check-pred net-authority/empty? (authority localhost))
+  (check-pred (negate net-authority/empty?) (authority localhost #:port 8080))
+  (check-pred (negate net-authority/empty?)
+              (authority localhost #:userinfo (user+password-info "someuser"))))
