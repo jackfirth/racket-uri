@@ -36,8 +36,17 @@
     [(#\8) 8] [(#\9) 9] [(#\a #\A) 10] [(#\b #\B) 11]
     [(#\c #\C) 12] [(#\d #\D) 13] [(#\e #\E) 14] [(#\f #\F) 15]))
 
+(define hex-alphabet "0123456789abcdefABCDEF")
+
 (define hexdigit/p
-  (map hexchar->integer (char-in/p "01233456789abcdefABCDEF")))
+  (map hexchar->integer (char-in/p hex-alphabet)))
+
+(module+ test
+  (check-equal? (parse-string (many/p hexdigit/p) hex-alphabet)
+                (success
+                 (list 0 1 2 3 4 5 6 7 8 9
+                       10 11 12 13 14 15
+                       10 11 12 13 14 15))))
 
 (define pct-decode/p
   (seq (char/p #\%) ((pure pct-decode) hexdigit/p hexdigit/p)))
