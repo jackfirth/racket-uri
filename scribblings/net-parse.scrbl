@@ -13,7 +13,7 @@ The @racket[net-parse] package provides data structures and
 Included are parsers for IP addresses, DNS addresses, and URIs. This library is
 intended for use when these values need to be handled in a more structured way
 than freeform strings. This library also serves as an alternative API to the
-functionality of the @racketmodname[net/url-struct] and
+functionality of the @racketmodname[net/url-structs] and
 @racketmodname[net/url-string] modules, with more spec compliance and a focus on
 supporting more URI schemes.
 
