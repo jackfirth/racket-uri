@@ -67,14 +67,35 @@
    (dns-subdomain?
     "aaaabbbbccccddddaaaabbbbccccddddaaaabbbbccccddddaaaabbbbccccdddd")))
 
+(define dns-address-parts-short-enough?
+  (< _ 256 .. string-length .. string-join _ "."))
+
+(module+ test
+  (check-pred dns-address-parts-short-enough? (list "www" "google" "com"))
+  (check-pred dns-address-parts-short-enough? (list (make-string 255 #\a)))
+  (check-pred (negate dns-address-parts-short-enough?)
+              (list (make-string 256 #\a)))
+  (check-pred (negate dns-address-parts-short-enough?)
+              (list (make-string 255 #\a) "b")))
+
 (struct dns-address (parts)
   #:transparent #:omit-define-syntaxes #:constructor-name make-dns-address)
 
-(define (dns-address . parts) (make-dns-address parts))
+(define (dns-address . parts)
+  (unless (dns-address-parts-short-enough? parts)
+    (raise-arguments-error 'dns-address
+                           "total length of dot-joined subdomains exceeds 255"
+                           "subdomains" parts))
+  (make-dns-address parts))
+
+(module+ test
+  (check-not-exn (thunk (dns-address (make-string 255 #\a))))
+  (check-exn exn:fail:contract? (thunk (dns-address (make-string 256 #\a)))))
+
 (define dns-root (dns-address))
 (define dns-root? (equal? _ dns-root))
-
 (define dns-address->list dns-address-parts)
+
 (define (dns-address->string addr)
   (define parts (dns-address->list addr))
   (if (empty? parts) "." (string-join parts ".")))
@@ -127,12 +148,6 @@
                 (failure (message (srcloc 'string 1 0 1 64)
                                   64-char-subdomain
                                   '("dns subdomain less than 64 chars long")))))
-
-(define dns-address-parts-short-enough?
-  (< _ 256 .. string-length .. apply string-append _ .. add-between _ "."))
-
-(module+ test
-  (check-true (dns-address-parts-short-enough? '("www" "google" "com"))))
 
 (define too-long-message
   "dns address with total length less than 256 (including dots)")
