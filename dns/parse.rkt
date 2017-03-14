@@ -4,7 +4,9 @@
 
 (provide
  (contract-out
-  [dns-address (->* () #:rest (listof dns-subdomain?) dns-address?)]
+  [dns-address (->* () (#:normalize-case? boolean?)
+                    #:rest (listof dns-subdomain?)
+                    dns-address?)]
   [dns-address? predicate/c]
   [dns-address->list (-> dns-address? (listof dns-subdomain?))]
   [dns-address->string (-> dns-address? string?)]
@@ -82,16 +84,20 @@
 (struct dns-address (parts)
   #:transparent #:omit-define-syntaxes #:constructor-name make-dns-address)
 
-(define (dns-address . parts)
+(define (dns-address #:normalize-case? [normalize? #t] . parts)
   (unless (dns-address-parts-short-enough? parts)
     (raise-arguments-error 'dns-address
                            "total length of dot-joined subdomains exceeds 255"
                            "subdomains" parts))
-  (make-dns-address parts))
+  (make-dns-address (if normalize? (map string-downcase parts) parts)))
 
 (module+ test
   (check-not-exn (thunk (dns-address (make-string 255 #\a))))
-  (check-exn exn:fail:contract? (thunk (dns-address (make-string 256 #\a)))))
+  (check-exn exn:fail:contract? (thunk (dns-address (make-string 256 #\a))))
+  (check-equal? (dns-address "www" "google" "com")
+                (dns-address "www" "GOOGLE" "com"))
+  (check-not-equal? (dns-address "www" "google" "com")
+                    (dns-address "www" "GOOGLE" "com" #:normalize-case? #f)))
 
 (define dns-root (dns-address))
 (define dns-root? (equal? _ dns-root))
