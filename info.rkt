@@ -6,6 +6,10 @@
                "functional-lib"
                "megaparsack-lib"
                ("base" #:version "6.5.0.900")))
-(define build-deps '("scribble-lib"
+(define build-deps '("racket-doc"
+                     "net-doc"
+                     "scribble-lib"
                      "scribble-text-lib"
                      "rackunit-lib"))
+(define scribblings
+  '(("scribblings/net-parse.scrbl" (multi-page) (parsing-library) "net-parse")))
