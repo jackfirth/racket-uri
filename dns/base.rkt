@@ -12,7 +12,7 @@
   [dns-localhost? predicate/c]
   [dns-root dns-root?]
   [dns-root? predicate/c]
-  [dns-subdomain? predicate/c]))
+  [dns-subdomain? (-> string? boolean?)]))
 
 (require compose-app/fancy-app
          racket/function
