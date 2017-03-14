@@ -18,7 +18,6 @@
          fancy-app
          megaparsack
          megaparsack/text
-         net/dns/base
          net/dns/parse
          net/ip/parse
          net/uri/base

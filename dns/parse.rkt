@@ -4,6 +4,15 @@
 
 (provide
  (contract-out
+  [dns-address (->* () #:rest (listof dns-subdomain?) dns-address?)]
+  [dns-address? predicate/c]
+  [dns-address->list (-> dns-address? (listof dns-subdomain?))]
+  [dns-address->string (-> dns-address? string?)]
+  [dns-localhost dns-address?]
+  [dns-localhost? predicate/c]
+  [dns-root dns-root?]
+  [dns-root? predicate/c]
+  [dns-subdomain? (-> string? boolean?)]
   [dns-subdomain/p (parser/c char? dns-subdomain?)]
   [dns-address/p (parser/c char? dns-address?)]
   [port-number/p (parser/c char? port-number?)]))
@@ -14,15 +23,72 @@
          data/monad
          megaparsack
          megaparsack/text
-         net/dns/base
          racket/function
          racket/list
          racket/string
-         racket/tcp)
+         racket/tcp
+         "parse-string.rkt")
 
 (module+ test
   (require rackunit))
 
+
+(define dns-subdomain-char?
+  (disjoin char-alphabetic-ascii? char-numeric-ascii? (equal? _ #\-)))
+
+(module+ test
+  (check-true (dns-subdomain-char? #\a))
+  (check-true (dns-subdomain-char? #\A))
+  (check-true (dns-subdomain-char? #\0))
+  (check-true (dns-subdomain-char? #\-))
+  (check-false (dns-subdomain-char? #\λ))
+  (check-false (dns-subdomain-char? #\+)))
+
+(define dns-subdomain?
+  (conjoin (< 0 _ 64 .. string-length)
+           (char-alphabetic-ascii? .. string-ref _ 0)
+           (stringof dns-subdomain-char? .. string-trim-ends)
+           (disjoin char-alphabetic-ascii? char-numeric-ascii? .. string-last)))
+
+(module+ test
+  (check-false (dns-subdomain? ""))
+  (check-true (dns-subdomain? "a"))
+  (check-false (dns-subdomain? "0"))
+  (check-false (dns-subdomain? "-"))
+  (check-false (dns-subdomain? "λ"))
+  (check-true (dns-subdomain? "aA"))
+  (check-true (dns-subdomain? "A0"))
+  (check-false (dns-subdomain? "a-"))
+  (check-true (dns-subdomain? "a-0"))
+  (check-true
+   (dns-subdomain?
+    "aaaabbbbccccddddaaaabbbbccccddddaaaabbbbccccddddaaaabbbbccccddd"))
+  (check-false
+   (dns-subdomain?
+    "aaaabbbbccccddddaaaabbbbccccddddaaaabbbbccccddddaaaabbbbccccdddd")))
+
+(struct dns-address (parts)
+  #:transparent #:omit-define-syntaxes #:constructor-name make-dns-address)
+
+(define (dns-address . parts) (make-dns-address parts))
+(define dns-root (dns-address))
+(define dns-root? (equal? _ dns-root))
+
+(define dns-address->list dns-address-parts)
+(define (dns-address->string addr)
+  (define parts (dns-address->list addr))
+  (if (empty? parts) "." (string-join parts ".")))
+
+(module+ test
+  (check-equal? (dns-address->string dns-root) ".")
+  (check-equal? (dns-address->string (dns-address "www" "google" "com"))
+                "www.google.com"))
+
+(define dns-localhost (dns-address "localhost"))
+(define dns-localhost? (equal? _ dns-localhost))
+
+(module+ test
+  (check-pred dns-localhost? dns-localhost))
 
 (define char-letter-ascii/p
   (label/p "an ascii character"
