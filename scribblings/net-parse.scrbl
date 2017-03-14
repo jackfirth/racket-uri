@@ -20,9 +20,6 @@ supporting more URI schemes.
 This package provides functionality via a handful of individual modules:
 
 @racketmodlist[
- @net/ip/base{Data structures and contracts for IPv4 and IPv6 addresses}
- @net/ip/parse{Parsers for IPv4 and IPv6 addresses}
- @net/dns/base{Data structures and contracts for DNS addresses}
- @net/dns/parse{Parsers for DNS addresses}
- @net/uri/base{Data structures and contracts for generic URIs}
- @net/uri/parse{Parsers for generic URIs}]
+ @net/ip/parse{Parsers and structures for IPv4 and IPv6 addresses}
+ @net/dns/parse{Parsers and structures for DNS addresses}
+ @net/uri/parse{Parsers and structures for generic URIs}]
