@@ -23,3 +23,7 @@ This package provides functionality via a handful of individual modules:
  @net/ip/parse{Parsers and structures for IPv4 and IPv6 addresses}
  @net/dns/parse{Parsers and structures for DNS addresses}
  @net/uri/parse{Parsers and structures for generic URIs}]
+
+@include-section["net-parse-ip.scrbl"]
+@include-section["net-parse-dns.scrbl"]
+@include-section["net-parse-uri.scrbl"]
