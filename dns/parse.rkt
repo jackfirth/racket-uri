@@ -73,10 +73,11 @@
 (module+ test
   (check-pred dns-address-parts-short-enough? (list "www" "google" "com"))
   (check-pred dns-address-parts-short-enough? (list (make-string 255 #\a)))
+  (check-pred dns-address-parts-short-enough? (list (make-string 253 #\a) "b"))
   (check-pred (negate dns-address-parts-short-enough?)
               (list (make-string 256 #\a)))
   (check-pred (negate dns-address-parts-short-enough?)
-              (list (make-string 255 #\a) "b")))
+              (list (make-string 254 #\a) "b")))
 
 (struct dns-address (parts)
   #:transparent #:omit-define-syntaxes #:constructor-name make-dns-address)
