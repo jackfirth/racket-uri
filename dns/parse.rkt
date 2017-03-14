@@ -4,10 +4,16 @@
 
 (provide
  (contract-out
-  [dns-address (->* () #:rest (listof dns-subdomain?) dns-address?)]
+  [dns-address (->* () (#:normalize-case? boolean?)
+                    #:rest (listof dns-subdomain?)
+                    dns-address?)]
   [dns-address? predicate/c]
   [dns-address->list (-> dns-address? (listof dns-subdomain?))]
-  [dns-address->string (-> dns-address? string?)]
+  [dns-address->string (->* (dns-address?)
+                            (#:trailing-dot? boolean?
+                             #:unicode? boolean?)
+                            string?)]
+  [dns-address-normalize (-> dns-address? dns-address?)]
   [dns-localhost dns-address?]
   [dns-localhost? predicate/c]
   [dns-root dns-root?]
@@ -27,6 +33,7 @@
          racket/list
          racket/string
          racket/tcp
+         "parse-punycode.rkt"
          "parse-string.rkt")
 
 (module+ test
@@ -82,29 +89,54 @@
 (struct dns-address (parts)
   #:transparent #:omit-define-syntaxes #:constructor-name make-dns-address)
 
-(define (dns-address . parts)
+(define (dns-address #:normalize-case? [normalize? #t] . parts)
   (unless (dns-address-parts-short-enough? parts)
     (raise-arguments-error 'dns-address
                            "total length of dot-joined subdomains exceeds 255"
                            "subdomains" parts))
-  (make-dns-address parts))
+  (make-dns-address (if normalize? (map string-downcase parts) parts)))
 
 (module+ test
   (check-not-exn (thunk (dns-address (make-string 255 #\a))))
-  (check-exn exn:fail:contract? (thunk (dns-address (make-string 256 #\a)))))
+  (check-exn exn:fail:contract? (thunk (dns-address (make-string 256 #\a))))
+  (check-equal? (dns-address "www" "google" "com")
+                (dns-address "www" "GOOGLE" "com"))
+  (check-not-equal? (dns-address "www" "google" "com")
+                    (dns-address "www" "GOOGLE" "com" #:normalize-case? #f)))
+
+(define dns-address-normalize (apply dns-address _ .. dns-address->list))
+
+(module+ test
+  (define uppercase-addr
+    (dns-address "www" "GOOGLE" "com" #:normalize-case? #f))
+  (check-equal? (dns-address-normalize uppercase-addr)
+                (dns-address "www" "google" "com")))
 
 (define dns-root (dns-address))
 (define dns-root? (equal? _ dns-root))
 (define dns-address->list dns-address-parts)
 
-(define (dns-address->string addr)
-  (define parts (dns-address->list addr))
-  (if (empty? parts) "." (string-join parts ".")))
+(define (dns-address->string addr
+                             #:trailing-dot? [dot? #f]
+                             #:unicode? [unicode? #f])
+  (define parts/raw (dns-address->list addr))
+  (define parts (if unicode? parts/raw (map punycode-encode parts/raw)))
+  (define joined-parts (string-join parts "."))
+  (cond [(empty? parts) "."]
+        [dot? (string-append joined-parts ".")]
+        [else joined-parts]))
 
 (module+ test
   (check-equal? (dns-address->string dns-root) ".")
   (check-equal? (dns-address->string (dns-address "www" "google" "com"))
-                "www.google.com"))
+                "www.google.com")
+  (check-equal? (dns-address->string (dns-address "www" "google" "com")
+                                     #:trailing-dot? #t)
+                "www.google.com.")
+  ;; this test is incorrect, but punycode isn't yet implemented
+  (check-equal? (dns-address->string (dns-address "www" "göögle" "com")
+                                     #:unicode? #t)
+                "www.göögle.com")) 
 
 (define dns-localhost (dns-address "localhost"))
 (define dns-localhost? (equal? _ dns-localhost))

@@ -1,8 +1,6 @@
 #lang scribble/manual
 
-@(require (for-label racket/base
-                     racket/contract
-                     net/dns/parse))
+@(require "net-parse-base.rkt")
 
 @title{Parsing DNS Addresses}
 @defmodule[net/dns/parse]
@@ -13,11 +11,19 @@
  Constructs a DNS address composed of the given @racket[subdomain]s. If
  @racket[normalize?] is true, each subdomain is converted to lower case with
  @racket[string-downcase]. DNS addresses can be normalized after construction
- with @racket[dns-address-normalize].}
+ with @racket[dns-address-normalize].
+ @(dns-examples
+   (dns-address "www" "google" "com")
+   (dns-address "www" "Google" "com")
+   (dns-address "www" "Google" "com" #:normalize-case? #f))}
 
 @defproc[(dns-address? [v any/c]) boolean?]{
  Returns @racket[#t] when @racket[v] is a DNS address as constructed with
- @racket[dns-address].}
+ @racket[dns-address].
+ @(dns-examples
+   (dns-address? (dns-address "www" "google" "com"))
+   (dns-address? 5)
+   (dns-address? "www.google.com"))}
 
 @defproc[(dns-subdomain? [str string?]) boolean?]{
  Returns @racket[#t] when @racket[str] is a DNS subdomain. Subdomains are
@@ -25,11 +31,19 @@
  alphabetic ASCII character. Subsequent characters must be ASCII alphabetic or
  numeric characters or the hyphen character. The subdomain must not end with a
  hyphen. DNS addresses are formally case-insensitive, although the
- @racket[dns-address] constructor allows preserving case information.}
+ @racket[dns-address] constructor allows preserving case information.
+ @(dns-examples
+   (dns-subdomain? "google")
+   (dns-subdomain? "göögle")
+   (dns-subdomain? "8oogle")
+   (dns-subdomain? "google-"))}
 
 @defproc[(dns-address-normalize [addr dns-address?]) dns-address?]{
  Returns an address equivalent to @racket[addr] but in normalized form. Each
- subdomain is converted to lowercase form with @racket[string-downcase].}
+ subdomain is converted to lowercase form with @racket[string-downcase].
+ @(dns-examples
+   (dns-address-normalize
+    (dns-address "www" "Google" "com" #:normalize-case? #f)))}
 
 @defproc[(dns-address->string [addr dns-address?]
                               [#:trailing-dot? dot? boolean? #f]
@@ -41,7 +55,10 @@
  is @racket[#t], the output string may contain Unicode characters making it an
  illegal string representation of a DNS address. Such a string should only be
  used for display purposes. If @racket[unicode?] is @racket[#f], Unicode
- characters in domain name are encoded in ASCII using the Punycode standard.}
+ characters in domain name are encoded in ASCII using the Punycode standard.
+ @(dns-examples
+   (dns-address->string (dns-address "www" "google" "com"))
+   (dns-address->string (dns-address "www" "google" "com") #:trailing-dot? #t))}
 
 @defproc[(string->dns-address [str string?]
                               [#:normalize-case? normalize? boolean? #t]
@@ -77,18 +94,18 @@
 
 @defproc[(dns-address->list [addr dns-address?])
          (listof (and/c string? dns-subdomain?))]{
- Returns a list of the subdomains in @racket[addr].}
+ Returns a list of the subdomains in @racket[addr].
+ @(dns-examples
+   (dns-address->list (dns-address "www" "google" "com")))}
 
-@defthing[dns-root dns-address?]{
- The root dns address. All DNS addresses implicitly refer to this address at the
- top of the domain name hierarchy. Equivalent to @racket[(dns-address)].}
+@deftogether[(@defthing[dns-root dns-address?]
+               @defproc[(dns-root? [v any/c]) boolean?])]{
+ The root dns address, and a predicate that recognizes the root address. All DNS
+ addresses implicitly refer to this address at the top of the domain name
+ hierarchy. Equivalent to @racket[(dns-address)].}
 
-@defproc[(dns-root? [v any/c]) boolean?]{
- Returns @racket[#t] when @racket[v] is equal to @racket[dns-root].}
-
-@defthing[dns-localhost dns-address?]{
- The localhost DNS address, referring to whatever the local machine is.
- Equivalent to @racket[(dns-address "localhost")].}
-
-@defproc[(dns-localhost? [v any/c]) boolean?]{
- Returns @racket[#t] when @racket[v] is equal to @racket[dns-localhost].}
+@deftogether[(@defthing[dns-localhost dns-address?]
+               @defproc[(dns-localhost? [v any/c]) boolean?])]{
+ The localhost DNS address (referring to whatever the local machine is), and a
+ predicate that recognizes the localhost address. Equivalent to
+ @racket[(dns-address "localhost")].}
