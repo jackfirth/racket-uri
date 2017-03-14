@@ -10,6 +10,7 @@
   [dns-address? predicate/c]
   [dns-address->list (-> dns-address? (listof dns-subdomain?))]
   [dns-address->string (-> dns-address? string?)]
+  [dns-address-normalize (-> dns-address? dns-address?)]
   [dns-localhost dns-address?]
   [dns-localhost? predicate/c]
   [dns-root dns-root?]
@@ -98,6 +99,14 @@
                 (dns-address "www" "GOOGLE" "com"))
   (check-not-equal? (dns-address "www" "google" "com")
                     (dns-address "www" "GOOGLE" "com" #:normalize-case? #f)))
+
+(define dns-address-normalize (apply dns-address _ .. dns-address->list))
+
+(module+ test
+  (define uppercase-addr
+    (dns-address "www" "GOOGLE" "com" #:normalize-case? #f))
+  (check-equal? (dns-address-normalize uppercase-addr)
+                (dns-address "www" "google" "com")))
 
 (define dns-root (dns-address))
 (define dns-root? (equal? _ dns-root))
