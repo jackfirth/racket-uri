@@ -129,7 +129,14 @@
 (module+ test
   (check-equal? (dns-address->string dns-root) ".")
   (check-equal? (dns-address->string (dns-address "www" "google" "com"))
-                "www.google.com"))
+                "www.google.com")
+  (check-equal? (dns-address->string (dns-address "www" "google" "com")
+                                     #:trailing-dot? #t)
+                "www.google.com.")
+  ;; this test is incorrect, but punycode isn't yet implemented
+  (check-equal? (dns-address->string (dns-address "www" "göögle" "com")
+                                     #:unicode? #t)
+                "www.göögle.com")) 
 
 (define dns-localhost (dns-address "localhost"))
 (define dns-localhost? (equal? _ dns-localhost))
