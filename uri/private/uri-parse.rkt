@@ -19,7 +19,6 @@
          data/monad
          megaparsack
          megaparsack/text
-         net/dns/base
          net/dns/parse
          net/uri/base
          "applicative.rkt"

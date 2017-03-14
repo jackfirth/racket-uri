@@ -33,7 +33,7 @@
   [user+password-info-password (-> user+password-info? (or/c string? #f))]))
 
 (require compose-app/fancy-app
-         net/dns/base
+         net/dns/parse
          net/ip/base
          racket/function
          racket/tcp
