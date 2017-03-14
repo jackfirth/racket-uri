@@ -3,7 +3,7 @@
 @(require syntax/parse/define)
 
 @(define-simple-macro (racketmodlist (id:id pre-content ...) ...)
-   (itemlist (item (racketmodname id) pre-content ...) ...))
+   (itemlist (item (racketmodname id) " --- " pre-content ...) ...))
 
 @title{Parsing Networking Data Structures}
 @author[@author+email["Jack Firth" "jackhfirth@gmail.com"]]
