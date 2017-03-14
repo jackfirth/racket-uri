@@ -1,5 +1,9 @@
 #lang scribble/manual
 
+@(require (for-label racket/base
+                     racket/contract
+                     net/dns/parse))
+
 @title{Parsing DNS Addresses}
 @defmodule[net/dns/parse]
 
