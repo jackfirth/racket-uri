@@ -9,7 +9,10 @@
                     dns-address?)]
   [dns-address? predicate/c]
   [dns-address->list (-> dns-address? (listof dns-subdomain?))]
-  [dns-address->string (-> dns-address? string?)]
+  [dns-address->string (->* (dns-address?)
+                            (#:trailing-dot? boolean?
+                             #:unicode? boolean?)
+                            string?)]
   [dns-address-normalize (-> dns-address? dns-address?)]
   [dns-localhost dns-address?]
   [dns-localhost? predicate/c]
@@ -30,6 +33,7 @@
          racket/list
          racket/string
          racket/tcp
+         "parse-punycode.rkt"
          "parse-string.rkt")
 
 (module+ test
@@ -112,9 +116,15 @@
 (define dns-root? (equal? _ dns-root))
 (define dns-address->list dns-address-parts)
 
-(define (dns-address->string addr)
-  (define parts (dns-address->list addr))
-  (if (empty? parts) "." (string-join parts ".")))
+(define (dns-address->string addr
+                             #:trailing-dot? [dot? #f]
+                             #:unicode? [unicode? #f])
+  (define parts/raw (dns-address->list addr))
+  (define parts (if unicode? parts/raw (map punycode-encode parts/raw)))
+  (define joined-parts (string-join parts "."))
+  (cond [(empty? parts) "."]
+        [dot? (string-append joined-parts ".")]
+        [else joined-parts]))
 
 (module+ test
   (check-equal? (dns-address->string dns-root) ".")
