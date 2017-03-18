@@ -36,8 +36,12 @@
          "parse-string.rkt")
 
 (module+ test
-  (require rackunit))
+  (require doc-coverage
+           rackunit))
 
+
+(module+ test
+  (check-all-documented 'net/dns/parse))
 
 (define dns-subdomain-char?
   (disjoin char-alphabetic-ascii? char-numeric-ascii? (equal? _ #\-)))
