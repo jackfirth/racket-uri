@@ -18,7 +18,6 @@
   [dns-subdomain? (-> string? boolean?)]
   [dns-subdomain/p (parser/c char? dns-subdomain?)]
   [dns-address/p (parser/c char? dns-address?)]
-  [port-number/p (parser/c char? port-number?)]
   [string->dns-address
    (->* (string?) (#:failure-result failure-result/c) any/c)]))
 
@@ -245,6 +244,3 @@
   (check-equal? (string->dns-address ".") dns-root)
   (check-equal? (string->dns-address "123" #:failure-result 'foo) 'foo)
   (check-equal? (string->dns-address "123" #:failure-result (thunk 'foo)) 'foo))
-
-(define port-description "port number between 1 and 65535")
-(define port-number/p (guard/p integer/p port-number? port-description))

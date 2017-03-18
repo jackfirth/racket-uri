@@ -30,6 +30,8 @@
            rackunit))
 
 
+(define port-description "port number between 1 and 65535")
+(define port-number/p (guard/p integer/p port-number? port-description))
 (define host/p (or/p ipv4-address/p _))
 
 (define username-char/p (or/p uri-unreserved/p pct-decode/p uri-sub-delims/p))
