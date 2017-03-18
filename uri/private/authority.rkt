@@ -34,7 +34,7 @@
 
 (require compose-app/fancy-app
          net/dns/parse
-         net/ip/base
+         net/ip/parse
          racket/function
          racket/tcp
          "struct.rkt")
