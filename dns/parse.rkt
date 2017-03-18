@@ -221,7 +221,6 @@
 (define (string->dns-address str #:failure-result [on-fail (no-failure-result)])
   (define (raise-parse-contract-exn err)
     (raise-arguments-error/parse err str
-                                 #:source 'string->dns-address
                                  #:include-column? #f
                                  #:include-line? #f))
   (define (on-fail-handler err)
@@ -233,7 +232,8 @@
              (not (equal? (string-length str) 1)))
         (substring str 0 (sub1 (string-length str)))
         str))
-  (either on-fail-handler values (parse-string dns-address/p str/no-dot)))
+  (either on-fail-handler values
+          (parse-string dns-address/p str/no-dot 'string->dns-address)))
 
 (module+ test
   (check-equal? (string->dns-address "www.google.com")
