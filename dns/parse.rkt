@@ -221,13 +221,9 @@
 (struct no-failure-result ())
 
 (define (string->dns-address str #:failure-result [on-fail (no-failure-result)])
-  (define (raise-parse-contract-exn err)
-    (raise-arguments-error/parse err str
-                                 #:include-column? #f
-                                 #:include-line? #f))
   (define (on-fail-handler err)
     (cond [(procedure? on-fail) (on-fail)]
-          [(no-failure-result? on-fail) (raise-parse-contract-exn err)]
+          [(no-failure-result? on-fail) (raise-arguments-error/parse err str)]
           [else on-fail]))
   (define str/no-dot
     (if (and (string-suffix? str ".")
