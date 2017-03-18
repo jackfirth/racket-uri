@@ -73,7 +73,7 @@
          (port-pred .. authority-port)))
 
 (module+ test
-  (check-pred (authority/c) (authority localhost)))
+  (check-pred (authority/c) (authority ipv4-localhost)))
 
 (define net-authority?
   (authority/c #:host net-host? #:userinfo (or/c user+password-info? #f)))
@@ -91,7 +91,7 @@
 
 (define net-authority/empty?
   (authority/c #:host (or/c empty-reg-name?
-                            localhost?
+                            ipv4-localhost?
                             (dns-localhost? .. dns-reg-name-address))
                #:userinfo not
                #:port not))
@@ -99,7 +99,7 @@
 (module+ test
   (check-pred net-authority/empty? (authority (dns-reg-name dns-localhost)))
   (check-pred net-authority/empty? (authority empty-reg-name))
-  (check-pred net-authority/empty? (authority localhost))
-  (check-pred (negate net-authority/empty?) (authority localhost #:port 8080))
+  (check-pred net-authority/empty? (authority ipv4-localhost))
+  (check-pred (negate net-authority/empty?) (authority ipv4-localhost #:port 8080))
   (check-pred (negate net-authority/empty?)
-              (authority localhost #:userinfo (user+password-info "someuser"))))
+              (authority ipv4-localhost #:userinfo (user+password-info "someuser"))))
