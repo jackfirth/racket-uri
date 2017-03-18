@@ -4,16 +4,13 @@
 
 (provide
  (contract-out
-  [dns-address (->* () (#:normalize-case? boolean?)
-                    #:rest (listof dns-subdomain?)
-                    dns-address?)]
+  [dns-address (->* () #:rest (listof dns-subdomain?) dns-address?)]
   [dns-address? predicate/c]
   [dns-address->list (-> dns-address? (listof dns-subdomain?))]
   [dns-address->string (->* (dns-address?)
                             (#:trailing-dot? boolean?
-                             #:unicode? boolean?)
+                             #:punycode? boolean?)
                             string?)]
-  [dns-address-normalize (-> dns-address? dns-address?)]
   [dns-localhost dns-address?]
   [dns-localhost? predicate/c]
   [dns-root dns-root?]
@@ -21,11 +18,14 @@
   [dns-subdomain? (-> string? boolean?)]
   [dns-subdomain/p (parser/c char? dns-subdomain?)]
   [dns-address/p (parser/c char? dns-address?)]
-  [port-number/p (parser/c char? port-number?)]))
+  [port-number/p (parser/c char? port-number?)]
+  [string->dns-address
+   (->* (string?) (#:failure-result failure-result/c) any/c)]))
 
 (require compose-app/fancy-app
          data/applicative
          data/either
+         (rename-in data/functor [map fmap])
          data/monad
          megaparsack
          megaparsack/text
@@ -89,12 +89,12 @@
 (struct dns-address (parts)
   #:transparent #:omit-define-syntaxes #:constructor-name make-dns-address)
 
-(define (dns-address #:normalize-case? [normalize? #t] . parts)
+(define (dns-address . parts)
   (unless (dns-address-parts-short-enough? parts)
     (raise-arguments-error 'dns-address
                            "total length of dot-joined subdomains exceeds 255"
                            "subdomains" parts))
-  (make-dns-address (if normalize? (map string-downcase parts) parts)))
+  (make-dns-address (map string-downcase parts)))
 
 (module+ test
   (check-not-exn (thunk (dns-address (make-string 255 #\a))))
@@ -102,15 +102,7 @@
   (check-equal? (dns-address "www" "google" "com")
                 (dns-address "www" "GOOGLE" "com"))
   (check-not-equal? (dns-address "www" "google" "com")
-                    (dns-address "www" "GOOGLE" "com" #:normalize-case? #f)))
-
-(define dns-address-normalize (apply dns-address _ .. dns-address->list))
-
-(module+ test
-  (define uppercase-addr
-    (dns-address "www" "GOOGLE" "com" #:normalize-case? #f))
-  (check-equal? (dns-address-normalize uppercase-addr)
-                (dns-address "www" "google" "com")))
+                    (dns-address "www" "foogle" "com")))
 
 (define dns-root (dns-address))
 (define dns-root? (equal? _ dns-root))
@@ -118,9 +110,9 @@
 
 (define (dns-address->string addr
                              #:trailing-dot? [dot? #f]
-                             #:unicode? [unicode? #f])
+                             #:punycode? [punycode? #t])
   (define parts/raw (dns-address->list addr))
-  (define parts (if unicode? parts/raw (map punycode-encode parts/raw)))
+  (define parts (if punycode? parts/raw (map punycode-encode parts/raw)))
   (define joined-parts (string-join parts "."))
   (cond [(empty? parts) "."]
         [dot? (string-append joined-parts ".")]
@@ -133,10 +125,12 @@
   (check-equal? (dns-address->string (dns-address "www" "google" "com")
                                      #:trailing-dot? #t)
                 "www.google.com.")
-  ;; this test is incorrect, but punycode isn't yet implemented
+  ;; these tests are incorrect, but punycode isn't yet implemented
+  (check-equal? (dns-address->string (dns-address "www" "göögle" "com"))
+                "www.göögle.com")
   (check-equal? (dns-address->string (dns-address "www" "göögle" "com")
-                                     #:unicode? #t)
-                "www.göögle.com")) 
+                                     #:punycode? #f)
+                "www.göögle.com"))
 
 (define dns-localhost (dns-address "localhost"))
 (define dns-localhost? (equal? _ dns-localhost))
@@ -158,8 +152,8 @@
   (or/p char-letter-ascii/p char-numeric-ascii/p))
 
 (define dns-subdomain-chars/p
-  (guard/p (or/p ((pure append) (list/p char-letter-ascii/p)
-                                (many/p dns-subdomain-char/p #:max 63))
+  (guard/p (or/p ((pure cons) char-letter-ascii/p
+                              (many/p dns-subdomain-char/p #:max 63))
                  (list/p char-letter-ascii/p))
            (negate (equal? _ #\-) .. last)
            "dns subdomain without trailing slash"))
@@ -193,8 +187,8 @@
 
 (define root/p (do (char/p #\.) (pure dns-root)))
 
-(define dns-address/p
-  (or/p ((pure (apply dns-address _)) dns-address-subdomains/p) root/p))
+(define dns-address/p  
+  (or/p (fmap (apply dns-address _) dns-address-subdomains/p) root/p))
 
 (module+ test
   (define 255-char-address
@@ -221,6 +215,36 @@
                  (message (srcloc 'string 1 0 1 257)
                           257-char-address
                           (list too-long-message)))))
+
+(struct no-failure-result ())
+
+(define (string->dns-address str #:failure-result [on-fail (no-failure-result)])
+  (define (raise-parse-contract-exn err)
+    (raise-arguments-error/parse err str
+                                 #:include-column? #f
+                                 #:include-line? #f))
+  (define (on-fail-handler err)
+    (cond [(procedure? on-fail) (on-fail)]
+          [(no-failure-result? on-fail) (raise-parse-contract-exn err)]
+          [else on-fail]))
+  (define str/no-dot
+    (if (and (string-suffix? str ".")
+             (not (equal? (string-length str) 1)))
+        (substring str 0 (sub1 (string-length str)))
+        str))
+  (either on-fail-handler values
+          (parse-string dns-address/p str/no-dot 'string->dns-address)))
+
+(module+ test
+  (check-equal? (string->dns-address "www.google.com")
+                (dns-address "www" "google" "com"))
+  (check-exn exn:fail:contract? (thunk (string->dns-address "21847")))
+  (check-exn #rx"64" (thunk (string->dns-address (make-string 65 #\a))))
+  (check-equal? (string->dns-address "www.google.com.")
+                (string->dns-address "www.google.com"))
+  (check-equal? (string->dns-address ".") dns-root)
+  (check-equal? (string->dns-address "123" #:failure-result 'foo) 'foo)
+  (check-equal? (string->dns-address "123" #:failure-result (thunk 'foo)) 'foo))
 
 (define port-description "port number between 1 and 65535")
 (define port-number/p (guard/p integer/p port-number? port-description))
