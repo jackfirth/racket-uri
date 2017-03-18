@@ -16,7 +16,6 @@
   [dns-root dns-root?]
   [dns-root? predicate/c]
   [dns-subdomain? (-> string? boolean?)]
-  [dns-subdomain/p (parser/c char? dns-subdomain?)]
   [dns-address/p (parser/c char? dns-address?)]
   [string->dns-address
    (->* (string?) (#:failure-result failure-result/c) any/c)]))

@@ -84,10 +84,24 @@
                @defproc[(dns-root? [v any/c]) boolean?])]{
  The root dns address, and a predicate that recognizes the root address. All DNS
  addresses implicitly refer to this address at the top of the domain name
- hierarchy. Equivalent to @racket[(dns-address)].}
+ hierarchy. Equivalent to @racket[(dns-address)].
+ @(dns-examples
+   dns-root
+   (dns-root? (dns-address)))}
 
 @deftogether[(@defthing[dns-localhost dns-address?]
                @defproc[(dns-localhost? [v any/c]) boolean?])]{
  The localhost DNS address (referring to whatever the local machine is), and a
  predicate that recognizes the localhost address. Equivalent to
- @racket[(dns-address "localhost")].}
+ @racket[(dns-address "localhost")].
+ @(dns-examples
+   dns-localhost
+   (dns-localhost? (dns-address "localhost")))}
+
+@defthing[dns-address/p (parser/c char? dns-address?)]{
+ A @racketmodname[megaparsack] parser that parses a DNS address, with similar
+ logic to @racket[string->dns-address]. However, @racket[dns-address/p] does not
+ recognize DNS addresses with a trailing dot due to the ambiguous grammar
+ created when combined with other parsers.
+ @(dns-examples
+   (parse-string dns-address/p "www.google.com"))}
