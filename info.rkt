@@ -6,7 +6,8 @@
                "functional-lib"
                "megaparsack-lib"
                ("base" #:version "6.5.0.900")))
-(define build-deps '("racket-doc"
+(define build-deps '("megaparsack-doc"
+                     "racket-doc"
                      "net-doc"
                      "scribble-lib"
                      "scribble-text-lib"
